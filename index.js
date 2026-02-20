@@ -1,79 +1,38 @@
-const express = require('express');
+const express = require("express");
+const connectDB = require("./src/utils/db"); 
+const movieRoutes = require("./src/routes/movie.routes");
+const cinemaRoutes = require("./src/routes/cinema.routes"); // Importamos las nuevas rutas de cines
 
-const {connect} = require('./utils/db');
-
-const Movie = require('./models/movie.model');
-
-connect();
-
+//Definimos el puerto
 const PORT = 8080;
+
+//Conectamos con la base de datos
+connectDB();
+
+//Creamos el servidor
 const server = express();
-const router = express.Router();
 
-// 1. Endpoint: Devolver todas las películas 
-router.get('/movies', async (req, res) => {
-  try {
-    const movies = await Movie.find();
-    return res.status(200).json(movies);
-  } catch (error) {
-    return res.status(500).json(error);
-  }
+//Tenemos que indicarle que vamos a trabajar con JSON (MIDDLEWARE)
+server.use(express.json());
+
+//Definimos las rutas que tenemos para películas
+server.use("/api/movies", movieRoutes);
+
+//Definimos las rutas que tenemos para cines
+server.use("/api/cinemas", cinemaRoutes);
+
+//Definimos el controlador de rutas no encontradas
+server.use((req, res) => {
+  return res.status(404).json({ message: "Route not found" });
 });
 
-// 2. Endpoint: Devolver película por _id 
-router.get('/movies/id/:id', async (req, res) => {
-  const id = req.params.id;
-  try {
-    const movie = await Movie.findById(id);
-    if (movie) {
-      return res.status(200).json(movie);
-    } else {
-      return res.status(404).json('Pelicula no encontrada para este id');
-    }
-  } catch (error) {
-    return res.status(500).json(error);
-  }
+//Definimos una ruta especial para errores básicos
+server.use((err, req, res) => {
+  console.log(err);
+  return res.status(500).json({ message: "Internal Server Error" });
 });
 
-// 3. Endpoint: Devolver película por título (Similar al alias del PDF) 
-router.get('/movies/title/:title', async (req, res) => {
-  const { title } = req.params;
-  try {
-    // Usamos find por si hay varias con el mismo título (remakes, etc.)
-    const movieByTitle = await Movie.find({ title: title }); 
-    return res.status(200).json(movieByTitle);
-  } catch (error) {
-    return res.status(500).json(error);
-  }
-});
-
-// 4. Endpoint: Devolver películas por género 
-router.get('/movies/genre/:genre', async (req, res) => {
-  const { genre } = req.params;
-  try {
-    const moviesByGenre = await Movie.find({ genre: genre });
-    return res.status(200).json(moviesByGenre);
-  } catch (error) {
-    return res.status(500).json(error);
-  }
-});
-
-// 5. Endpoint: Películas a partir de 2010 ($gt significa "mayor que") 
-// Nota: El PDF menciona req.params para capturar datos dinámicos.
-router.get('/movies/year/:year', async (req, res) => {
-  const { year } = req.params;
-  try {
-    // $gt es un operador de MongoDB para "Greater Than" 
-    const moviesByYear = await Movie.find({ year: { $gt: year } });
-    return res.status(200).json(moviesByYear);
-  } catch (error) {
-    return res.status(500).json(error);
-  }
-});
-
-// Usamos el router y arrancamos el servidor 
-server.use('/', router);
-
+//Levantamos y escuchamos el servidor
 server.listen(PORT, () => {
-  console.log(`Servidor escuchando en http://localhost:${PORT}`);
+  console.log(`🛜  Servidor levantado en http://localhost:${PORT}`);
 });
