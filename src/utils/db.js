@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 // La dirección de nuestra base de datos local
-const MONGO_URI = "mongodb://localhost:27017/proyecto-basico-express-movies";
+const MONGO_URI = "mongodb://localhost:27017/proyecto5_nosql";
 
 const connectDB = async () => {
   try {
